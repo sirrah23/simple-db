@@ -1,6 +1,8 @@
 package db
 
 import (
+	"bufio"
+	"io"
 	"os"
 	"testing"
 )
@@ -38,6 +40,34 @@ func TestGetNotExist(t *testing.T) {
 	keyToGet := "hello"
 	value := Get(dbfile, keyToGet)
 	if value != "" {
+		t.Fail()
+	}
+}
+
+func TestDeleteExists(t *testing.T) {
+	defer CleanUp()
+	key, value := "hello", "world"
+	AddEntry(dbfile, key, value)
+	DelEntry(dbfile, "hello")
+	fhandle, err := os.Open(dbfile)
+	if err != nil {
+		panic("Couldn't open the database!")
+	}
+	fileReader := bufio.NewReader(fhandle)
+	data, err := fileReader.ReadString('\n')
+	// Second line has deleted update
+	data, err = fileReader.ReadString('\n')
+	if err != nil {
+		// Shouldn't be getting errors when reading the data here...
+		t.Fail()
+	}
+	if data != "hello-DELETED\n" {
+		// Key marked as deleted
+		t.Fail()
+	}
+	data, err = fileReader.ReadString('\n')
+	if err != io.EOF {
+		// Should be nothing else in the file...
 		t.Fail()
 	}
 }
