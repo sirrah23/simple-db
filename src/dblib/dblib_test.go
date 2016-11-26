@@ -44,6 +44,19 @@ func TestGetNotExist(t *testing.T) {
 	}
 }
 
+func TestGetMultiple(t *testing.T){
+	// Get should always get the last write
+	defer CleanUp()
+	key1, value1 := "hello", "world"
+	key2, value2 := "hello", "friend"
+	AddEntry(dbfile, key1, value1)
+	AddEntry(dbfile, key2, value2)
+	insertedValue := Get(dbfile, "hello")	
+	if insertedValue != "friend" {
+		t.Fail()
+	}
+}
+
 func TestDeleteExists(t *testing.T) {
 	defer CleanUp()
 	key, value := "hello", "world"

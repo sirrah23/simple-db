@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"fmt"
 )
 
 func AddEntry(filename, key, value string) {
@@ -54,23 +55,45 @@ func SplitInTwo(strtosplit, sep string) (string, string) {
 
 func Get(filename, key string) string {
 	fhandle, err := os.Open(filename)
+	defer fhandle.Close()
 	if err != nil {
 		if os.IsNotExist(err) {
 			fhandle, err = os.Create(filename)
+			return ""
 		}
 	}
 	CheckError(err)
+	curr_key, curr_val := "", ""
+	var val string
+	file_reader := bufio.NewReader(fhandle)
+	for {
+		data, err := file_reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		curr_key, curr_val = SplitInTwo(data, ":")
+		if curr_key == key {
+			val = curr_val[:len(curr_val)-1]
+		}
+	}
+	return val
+}
+
+func printFile(filename string){
+	fhandle, _ := os.Open(filename)
 	defer fhandle.Close()
 	file_reader := bufio.NewReader(fhandle)
 	for {
 		data, err := file_reader.ReadString('\n')
 		if err == io.EOF {
-			// TODO: Return error here?
-			return ""
+			break
 		}
-		curr_key, curr_val := SplitInTwo(data, ":")
-		if curr_key == key {
-			return curr_val[:len(curr_val)-1]
-		}
+		fmt.Println(data)
 	}
 }
+/*
+func Compress(filename) {
+	fhandle,err := os.Open(filename)
+
+}
+*/
