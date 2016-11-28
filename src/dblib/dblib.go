@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
 
 func AddEntry(filename, key, value string) {
@@ -120,7 +121,8 @@ func Compress(filename string) {
 		} else {
 			//Key exists
 			curr_key, curr_val := SplitInTwo(data, ":")
-			keyValMap[curr_key] = curr_val
+			// TODO: Get AddEntry to clean input?
+			keyValMap[curr_key] = curr_val[:len(curr_val)-1]
 		}
 
 	}
@@ -131,9 +133,14 @@ func Compress(filename string) {
 		AddEntry(filenameTemp, k, v) //Add compressed Key-Value pairs to new database
 	}
 	// TODO: Create a function go generate timestamp strings
-	err = os.Rename(filename, filename+"timestamp")
+	err = os.Rename(filename, filename+"."+genTimeStamp())
 	// TODO: Compress the backup file that gets created
 	CheckError(err)
 	err = os.Rename(filenameTemp, filename) //New file with old writes removed!
 	CheckError(err)
+}
+
+func genTimeStamp() string {
+	//Timestamp of of the format YYYYMMDD.HHMMSS
+	return time.Now().Format("20060102.0345")
 }
