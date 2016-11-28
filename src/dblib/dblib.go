@@ -2,10 +2,10 @@ package db
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"strings"
-	"fmt"
 )
 
 func AddEntry(filename, key, value string) {
@@ -71,15 +71,25 @@ func Get(filename, key string) string {
 		if err == io.EOF {
 			break
 		}
-		curr_key, curr_val = SplitInTwo(data, ":")
-		if curr_key == key {
-			val = curr_val[:len(curr_val)-1]
+		if strings.Index(data, ":") == -1 {
+			// Key has been deleted
+			curr_key, curr_val = SplitInTwo(data, "-")
+			if curr_key == key {
+				val = ""
+			}
+		} else {
+			// Key exists
+			curr_key, curr_val = SplitInTwo(data, ":")
+			if curr_key == key {
+				val = curr_val[:len(curr_val)-1]
+			}
 		}
 	}
 	return val
 }
 
-func printFile(filename string){
+// Function for testing purposes
+func printFile(filename string) {
 	fhandle, _ := os.Open(filename)
 	defer fhandle.Close()
 	file_reader := bufio.NewReader(fhandle)
@@ -91,9 +101,39 @@ func printFile(filename string){
 		fmt.Println(data)
 	}
 }
-/*
-func Compress(filename) {
-	fhandle,err := os.Open(filename)
 
+func Compress(filename string) {
+	fhandleOrig, err := os.Open(filename)
+	CheckError(err)
+	defer fhandleOrig.Close()
+	keyValMap := make(map[string]string)
+	file_reader := bufio.NewReader(fhandleOrig)
+	for {
+		data, err := file_reader.ReadString('\n')
+		if err == io.EOF {
+			break
+		}
+		if strings.Index(data, ":") == -1 {
+			// Key was deleted
+			curr_key, _ := SplitInTwo(data, "-")
+			delete(keyValMap, curr_key)
+		} else {
+			//Key exists
+			curr_key, curr_val := SplitInTwo(data, ":")
+			keyValMap[curr_key] = curr_val
+		}
+
+	}
+	filenameTemp := filename + "_temp"
+	_, err = os.Create(filenameTemp)
+	CheckError(err)
+	for k, v := range keyValMap {
+		AddEntry(filenameTemp, k, v) //Add compressed Key-Value pairs to new database
+	}
+	// TODO: Create a function go generate timestamp strings
+	err = os.Rename(filename, filename+"timestamp")
+	// TODO: Compress the backup file that gets created
+	CheckError(err)
+	err = os.Rename(filenameTemp, filename) //New file with old writes removed!
+	CheckError(err)
 }
-*/
