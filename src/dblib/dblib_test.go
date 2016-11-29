@@ -4,13 +4,15 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"os/exec"
+	"strings"
 	"testing"
 )
 
 var dbfile = "./test_db"
 
 func TestInsertOne(t *testing.T) {
-	defer CleanUp()
+	defer CleanUp(dbfile)
 	key, value := "hello", "world"
 	AddEntry(dbfile, key, value)
 	insertedValue := Get(dbfile, "hello")
@@ -20,7 +22,7 @@ func TestInsertOne(t *testing.T) {
 }
 
 func TestInsertTwo(t *testing.T) {
-	defer CleanUp()
+	defer CleanUp(dbfile)
 	key1, value1 := "hello", "world"
 	key2, value2 := "This is a", "Test"
 	AddEntry(dbfile, key1, value1)
@@ -36,7 +38,7 @@ func TestInsertTwo(t *testing.T) {
 }
 
 func TestGetNotExist(t *testing.T) {
-	defer CleanUp()
+	defer CleanUp(dbfile)
 	keyToGet := "hello"
 	value := Get(dbfile, keyToGet)
 	if value != "" {
@@ -44,21 +46,21 @@ func TestGetNotExist(t *testing.T) {
 	}
 }
 
-func TestGetMultiple(t *testing.T){
+func TestGetMultiple(t *testing.T) {
 	// Get should always get the last write
-	defer CleanUp()
+	defer CleanUp(dbfile)
 	key1, value1 := "hello", "world"
 	key2, value2 := "hello", "friend"
 	AddEntry(dbfile, key1, value1)
 	AddEntry(dbfile, key2, value2)
-	insertedValue := Get(dbfile, "hello")	
+	insertedValue := Get(dbfile, "hello")
 	if insertedValue != "friend" {
 		t.Fail()
 	}
 }
 
 func TestDeleteExists(t *testing.T) {
-	defer CleanUp()
+	defer CleanUp(dbfile)
 	key, value := "hello", "world"
 	AddEntry(dbfile, key, value)
 	DelEntry(dbfile, "hello")
@@ -85,8 +87,24 @@ func TestDeleteExists(t *testing.T) {
 	}
 }
 
-func CleanUp() {
-	err := os.Remove(dbfile)
+func TestEmptyCompression(t *testing.T) {
+	os.Create(dbfile)
+	Compress(dbfile)
+	output, err := exec.Command("bash", "-c", "ls "+dbfile+"*").Output()
+	CheckError(err)
+	filesInDir := strings.Split(string(output), "\n")
+	filesInDir = filesInDir[:len(filesInDir)-1]
+	// New DB file and Backup
+	if len(filesInDir) != 2 {
+		t.Fail()
+	}
+	for i := range filesInDir {
+		CleanUp(filesInDir[i])
+	}
+}
+
+func CleanUp(filename string) {
+	err := os.Remove(filename)
 	if err != nil {
 		panic("Could't do a cleanup!!!!!")
 	}

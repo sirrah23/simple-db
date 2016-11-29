@@ -141,6 +141,6 @@ func Compress(filename string) {
 }
 
 func genTimeStamp() string {
-	//Timestamp of of the format YYYYMMDD.HHMMSS
+	//Timestamp of the format YYYYMMDD.HHMMSS
 	return time.Now().Format("20060102.0345")
 }
