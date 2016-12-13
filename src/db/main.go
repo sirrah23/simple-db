@@ -1,50 +1,77 @@
 package main
 
 import (
-	"dblib"
 	"fmt"
 	"os"
+	"bufio"
+	"strings"
+	"dblib"
 )
+
+func CheckError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func cleanNewLine(s string) string{
+	return strings.Replace(s, "\n", "", -1)
+}
 
 func main() {
 	//TODO : Validate syntax (no ':' in key or value)
 	//TODO : Create a usage string printing submodule
-	if len(os.Args) == 1 {
-		fmt.Println("Usage: db (add|del|get) key [value]")
-		return
+	if len(os.Args) != 2{
+			fmt.Println("Usage: db <database name>")
+			return
 	}
-	action := os.Args[1]
-	/*
-		key := os.Args[2]
-		value := ""
-	*/
-	file := "./my_db"
-	if action == "add" {
-		if len(os.Args) < 4 {
-			fmt.Println("Usage: db (add|del|get) key [value]")
-			return
+	databaseFile := os.Args[1]
+	if _, err := os.Stat(databaseFile);  os.IsNotExist(err){
+		_, err := os.Create(databaseFile) //fhandle
+		CheckError(err)
+	}
+	reader := bufio.NewReader(os.Stdin)
+	var userInput []string
+	for{
+		fmt.Print("Enter text: ")
+		text, err := reader.ReadString('\n')
+		CheckError(err)
+		userInput = strings.Split(text," ")
+		for ind, elem := range userInput{
+			userInput[ind] = cleanNewLine(elem)
 		}
-		key := os.Args[2]
-		value := os.Args[3]
-		db.AddEntry(file, key, value)
-	} else if action == "del" {
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: db (add|del|get) key [value]")
-			return
+		action := userInput[0]
+		switch action{
+		case "add":
+			if len(userInput) != 3 {
+				fmt.Println("Invalid command...")
+			}else{
+				key := userInput[1]
+				val := userInput[2]
+				db.AddEntry(databaseFile, key, val)
+			}
+		case "get":
+			if len(userInput) != 2 {
+				fmt.Println("Invalid command...")
+			}else{
+				key := userInput[1]
+				fmt.Println(db.Get(databaseFile, key))
+			}
+		case "del":
+			if len(userInput) != 2 {
+				fmt.Println("Invalid command...")
+			}else{
+				key := userInput[1]
+				db.DelEntry(databaseFile, key)
+			}
+		case "compress":
+			if len(userInput) != 1{
+				fmt.Println("Invalid command...")
+			}else{
+				db.Compress(databaseFile)
+			}
+		default:
+			fmt.Println("Invalid command")
 		}
-		key := os.Args[2]
-		db.DelEntry(file, key)
-	} else if action == "get" {
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: db (add|del|get) key [value]")
-			return
-		}
-		key := os.Args[2]
-		fmt.Println(db.Get(file, key))
-	} else if action == "compress" {
-		db.Compress(file)
-	} else {
-		fmt.Println("Usage: db (add|del|get) key [value]")
-		return
 	}
 }
