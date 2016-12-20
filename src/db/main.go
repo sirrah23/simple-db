@@ -32,7 +32,7 @@ func main() {
 	}
 	reader := bufio.NewReader(os.Stdin)
 	var userInput []string
-	var index db.Index
+	var index *db.Index
 	for {
 		fmt.Print("db> ")
 		text, err := reader.ReadString('\n')
@@ -56,7 +56,11 @@ func main() {
 				fmt.Println("Invalid command...")
 			} else {
 				key := userInput[1]
-				fmt.Println(db.Get(databaseFile, key))
+				if index == nil {
+					fmt.Println(db.Get(databaseFile, key))
+				} else {
+					fmt.Println(index.GetVal(key))
+				}
 			}
 		case "del":
 			if len(userInput) != 2 {

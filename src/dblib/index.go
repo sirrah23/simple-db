@@ -12,8 +12,8 @@ type Index struct {
 	indmap   map[string]int64
 }
 
-func CreateIndex(filename string) Index {
-	return Index{filename, make(map[string]int64)}
+func CreateIndex(filename string) *Index {
+	return &Index{filename, make(map[string]int64)}
 }
 
 func (i *Index) PopulateIndex() {
@@ -46,4 +46,25 @@ func (i *Index) PopulateIndex() {
 		buffered := int64(fileReader.Buffered())
 		currPos = fsize - buffered
 	}
+}
+
+func (i *Index) GetVal(key string) (val string) {
+	val = ""
+	fhandle, err := os.Open(i.filename)
+	CheckError(err)
+	fileReader := bufio.NewReader(fhandle)
+	loc, ok := i.indmap[key]
+	if !ok {
+		return
+	}
+	_, err = fileReader.Discard(int(loc)) //-1?
+	CheckError(err)
+	data, err := fileReader.ReadString('\n')
+	CheckError(err)
+	if strings.Index(data, ":") == -1 {
+		return
+	}
+	_, val = SplitInTwo(data, ":")
+	val = val[:len(val)-1]
+	return
 }
