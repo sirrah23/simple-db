@@ -68,3 +68,7 @@ func (i *Index) GetVal(key string) (val string) {
 	val = val[:len(val)-1]
 	return
 }
+
+func (i *Index) AddEntry(key string, loc int64) {
+	i.indmap[key] = loc
+}

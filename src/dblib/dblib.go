@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func AddEntry(filename, key, value string) {
+func AddEntry(filename, key, value string) int64 {
 	//TODO : Abstract file opening stuff into a Open_Database(...) function
 	fhandle, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0655)
 	if err != nil {
@@ -20,9 +20,13 @@ func AddEntry(filename, key, value string) {
 	CheckError(err)
 	//TODO : Create a Close_Database(...) function for this
 	defer fhandle.Close()
+	fileinfo, err := fhandle.Stat()
+	CheckError(err)
+	loc := fileinfo.Size() + 1
 	entry := key + ":" + value + "\n"
 	_, err = fhandle.WriteString(entry)
 	CheckError(err)
+	return loc // Location where entry was written to in file
 }
 
 func DelEntry(filename, key string) {

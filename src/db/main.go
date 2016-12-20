@@ -49,7 +49,10 @@ func main() {
 			} else {
 				key := userInput[1]
 				val := userInput[2]
-				db.AddEntry(databaseFile, key, val)
+				loc := db.AddEntry(databaseFile, key, val)
+				if index != nil {
+					index.AddEntry(key, loc)
+				}
 			}
 		case "get":
 			if len(userInput) != 2 {
